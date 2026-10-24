@@ -1,6 +1,6 @@
 {
   "name": "@bushizhanghan/dsh-profile-doctor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Superset of dsh-doctor: 7 config checks plus pnpm store/release-age conflicts, broken links, duplicate-capability plugins, orphan backups, and drift history. 插件生态自诊：配置体检 + pnpm 冲突 + 失效链接 + 重复能力 + 孤儿备份 + 漂移历史。",
   "type": "module",
   "main": "lib/index.js",
