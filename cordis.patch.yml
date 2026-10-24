@@ -1,0 +1,4 @@
+# dsh bundle layer: mount the profile-doctor plugin (lib/index.js).
+- insert:
+    - id: profile-doctor
+      name: '@bushizhanghan/dsh-profile-doctor'
