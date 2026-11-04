@@ -346,3 +346,39 @@ test('a config sub-key named id is not mistaken for an inserted entry', () => {
     rmSync(dir, { recursive: true, force: true })
   }
 })
+
+test('readReleaseAgeExcludes reads a flow-style list too', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'doctor-age-'))
+  try {
+    writeFileSync(
+      join(dir, 'pnpm-workspace.yaml'),
+      "packages:\n  - '.'\nminimumReleaseAgeExclude: ['a@1.0.0', \"b@2.0.0\"]\n",
+    )
+    // the real profile uses flow style; the block-style parser returned []
+    assert.deepEqual(readReleaseAgeExcludes(dir).entries, ['a@1.0.0', 'b@2.0.0'])
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('checkOrphanBackups finds .bak- debris beside the profile, not just backup-*', () => {
+  const tmpHome = mkdtempSync(join(tmpdir(), 'doctor-home-'))
+  const prev = process.env.DSH_HOME
+  process.env.DSH_HOME = tmpHome
+  try {
+    const profiles = join(tmpHome, 'profiles')
+    mkdirSync(join(profiles, 'desktop'), { recursive: true })
+    writeFileSync(join(profiles, 'desktop', 'package.json'), '{"name":"desktop"}')
+    mkdirSync(join(profiles, 'desktop.bak-20261016-171322'), { recursive: true })
+    writeFileSync(join(profiles, 'desktop.bak-20261016-171322', 'package.json'), '{}')
+    const names = checkOrphanBackups(join(profiles, 'desktop')).map((f) => f.plugin)
+    assert.ok(
+      names.includes('desktop.bak-20261016-171322'),
+      `profile backups are the debris that actually piles up; got ${JSON.stringify(names)}`,
+    )
+  } finally {
+    if (prev === undefined) delete process.env.DSH_HOME
+    else process.env.DSH_HOME = prev
+    rmSync(tmpHome, { recursive: true, force: true })
+  }
+})

@@ -45,7 +45,8 @@ dsh plugin --profile desktop add @bushizhanghan/dsh-profile-doctor
 | `link-broken` | ✗ error | junction/symlink 目标已消失（含 lstat 就失败的坏 junction） |
 | `insert-id-collision` | ✗ error | 两个包 insert 同一个 entry id → cordis 按 id 记账，后挂的赢，先挂的装上了却永远不加载（典型：fork 和上游共存） |
 | `duplicate-capability` | ! warn | 两个第三方插件提供同一能力（如两个 code-review） |
-| `orphan-backup` | ! warn | `backup-*` 目录没有任何东西引用，只占地方 |
+| `orphan-backup` | ! warn | `backup-*` 目录、`profiles/desktop.bak-*` 目录、`*.bak-*` 文件，没有任何东西引用，只占地方 |
+| `dump-empty` | ! warn | `dsh --dump-config` 成功了但一条 entry 都没渲染出来——这不是干净，是 dump 坏了 |
 | `github-source` | ! warn | `github:` 依赖：需要联网、绕过 registry 完整性校验、force-push 会变 |
 | `publish-scope` | · info | granular token 发不了裸包名（E403）——提示走 scoped 名 |
 | release-age | 工具 | 谁在 pnpm 冷却窗口内、`minimumReleaseAgeExclude` 缺哪行 |
@@ -76,7 +77,7 @@ dsh plugin --profile desktop add @bushizhanghan/dsh-profile-doctor
 ## 开发
 
 ```sh
-node --test    # 20 个单测：dump 解析、七检、生态九检
+node --test    # 22 个测试：dump 解析、七检、生态十一检
 ```
 
 ## License
