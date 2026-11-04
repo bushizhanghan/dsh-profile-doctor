@@ -34,6 +34,7 @@ dsh plugin --profile desktop add @bushizhanghan/dsh-profile-doctor
 | `plugin-not-mounted` | ! warn | 装了但既不在 bundles 也没被 patch insert，从不加载 |
 | `plugin-stale` | ! warn | 180 天没发新版（DSH 在 preview 期，breaking change 频繁） |
 | `entry-toggled` / `entry-added` | · info | 树 diff 可见化 |
+| `dump-unavailable` | ! warn | `dsh --dump-config` 跑不出来（PATH 里没 `dsh`、profile 起不来）→ 上面六检**一条都没跑**，剩下的只是文件系统检查。有这条才不会被当成"体检干净" |
 
 ### 生态（本插件的增量，全部来自真实踩坑）
 
@@ -69,6 +70,8 @@ dsh plugin --profile desktop add @bushizhanghan/dsh-profile-doctor
 - **网络检查尽力而为**：registry 超时把 staleness 降级成 unknown，而不是让体检失败——一个在防火墙后面跑不起来的医生，比一个报得少的医生更糟。
 - **修不修由你定**：每条 finding 都带 `fix` 文案，但插件只读。改配置是人来决定的事（dsh-doctor 的 `--fix` 也刻意只留在 CLI，同理）。
 - **重复能力是 warn 不是 error**：关键词重叠是启发式，你可能就是故意两个都用。
+- **`profile` 是名字不是路径**：传绝对路径以前会落到一个不存在的目录，然后返回 `ok: true, findings: []`——跟"体检干净"长得一模一样。现在目录不存在直接 `ok: false` 并列出真实存在的 profile。
+- **dump 失败要说出来**：六检全跳过时只留一个 `dumpError` 字段没人读，等于骗人；现在它变成一条 warn finding。
 
 ## 开发
 

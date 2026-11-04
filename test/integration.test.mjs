@@ -30,6 +30,18 @@ try {
   const audit = await call('profile_doctor', { profile: 'desktop', offline: true })
   results.push(['audit degrades gracefully', audit.ok === true && typeof audit.report === 'string'])
   results.push(['audit still found filesystem findings', Array.isArray(audit.findings)])
+
+  // 5. a failed dump must be reported as a finding, not just a field nobody
+  //    reads — otherwise five filesystem findings look like the whole audit
+  const dumpFinding = (audit.findings || []).find((f) => f.rule === 'dump-unavailable')
+  results.push(['a failed dump is reported as a finding', audit.dumpError === null || Boolean(dumpFinding)])
+  results.push(['the dump finding names what did not run', !dumpFinding || /config-clobber/.test(dumpFinding.detail || '')])
+
+  // 6. a profile that does not exist must fail loudly. A silent zero-finding
+  //    "ok" reads exactly like a clean profile.
+  const ghost = await call('profile_doctor', { profile: 'definitely-not-a-profile', offline: true })
+  results.push(['a missing profile returns ok:false', ghost.ok === false && /no profile at/.test(String(ghost.error || ''))])
+  results.push(['the missing-profile error lists the profiles that exist', /have: /.test(String(ghost.error || ''))])
 } catch (error) {
   console.error('UNEXPECTED THROW:', error)
   results.push(['no-throw', false])
