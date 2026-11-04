@@ -42,6 +42,7 @@ dsh plugin --profile desktop add @bushizhanghan/dsh-profile-doctor
 | `pnpm-store-conflict` | ✗ error | node_modules 是 v10 store 链的，而 CLI 的 pnpm 是 v11 → `dsh plugin add` 报 `ERR_PNPM_UNEXPECTED_STORE` |
 | `patch-name-unresolvable` | ✗ error | patch insert 的 `name` 在 node_modules 里找不到（scoped 包放错层级：必须在 `@scope/` 下） |
 | `link-broken` | ✗ error | junction/symlink 目标已消失（含 lstat 就失败的坏 junction） |
+| `insert-id-collision` | ✗ error | 两个包 insert 同一个 entry id → cordis 按 id 记账，后挂的赢，先挂的装上了却永远不加载（典型：fork 和上游共存） |
 | `duplicate-capability` | ! warn | 两个第三方插件提供同一能力（如两个 code-review） |
 | `orphan-backup` | ! warn | `backup-*` 目录没有任何东西引用，只占地方 |
 | `github-source` | ! warn | `github:` 依赖：需要联网、绕过 registry 完整性校验、force-push 会变 |
@@ -57,6 +58,7 @@ dsh plugin --profile desktop add @bushizhanghan/dsh-profile-doctor
 ! "backup-plugin-upgrade-20261022" is a backup directory nothing references (96 KB, 7 files)
 ! "dsh-md-export" installs from github: instead of the npm registry
 ! "dsh-workbuddy" installs from github: instead of the npm registry
+✗ entry id "llm-workbuddy" is inserted by both "@bushizhanghan/dsh-workmate" and "dsh-workbuddy" — only one of them can mount
 ```
 
 以及 `profile_doctor_release_age` 报出的 4 条豁免与冷却缺口。
@@ -71,7 +73,7 @@ dsh plugin --profile desktop add @bushizhanghan/dsh-profile-doctor
 ## 开发
 
 ```sh
-node --test test/    # 16 个单测：dump 解析、七检、生态八检
+node --test    # 20 个单测：dump 解析、七检、生态九检
 ```
 
 ## License

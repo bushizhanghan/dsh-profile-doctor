@@ -8,6 +8,7 @@ import {
   checkDuplicateCapabilities,
   checkGithubSources,
   checkOrphanBackups,
+  checkInsertCollisions,
   checkPatchNames,
   checkStoreConflict,
   checkToggles,
@@ -284,6 +285,63 @@ test('checkOrphanBackups reports a backup dir nothing references', () => {
       if (real === undefined) delete process.env.DSH_HOME
       else process.env.DSH_HOME = real
     }
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('two packages inserting the same entry id are reported', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'doctor-collide-'))
+  try {
+    const nm = join(dir, 'node_modules')
+    for (const [name, id] of [
+      ['@acme/fork', 'llm-x'],
+      ['upstream', 'llm-x'],
+      ['solo', 'llm-y'],
+    ]) {
+      mkdirSync(join(nm, name), { recursive: true })
+      writeFileSync(join(nm, name, 'cordis.patch.yml'), `- insert:\n    - id: ${id}\n      name: ${name}\n`)
+    }
+    const findings = checkInsertCollisions(dir, [])
+    assert.equal(findings.length, 1, 'only llm-x collides')
+    assert.equal(findings[0].entry, 'llm-x')
+    assert.equal(findings[0].severity, 'error')
+    assert.match(findings[0].plugin, /@acme\/fork/)
+    assert.match(findings[0].plugin, /upstream/)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('a profile patch re-inserting a package entry id is a collision too', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'doctor-collide2-'))
+  try {
+    const nm = join(dir, 'node_modules')
+    mkdirSync(join(nm, 'pkg'), { recursive: true })
+    writeFileSync(join(nm, 'pkg', 'cordis.patch.yml'), '- insert:\n    - id: llm-x\n      name: pkg\n')
+    const patch = join(dir, 'cordis.patch.yml')
+    writeFileSync(patch, '- insert:\n    - id: llm-x\n      name: pkg\n')
+    const findings = checkInsertCollisions(dir, [
+      { path: patch, ids: ['llm-x'], inserts: [{ id: 'llm-x', name: 'pkg' }] },
+    ])
+    assert.equal(findings.length, 1)
+    assert.match(findings[0].plugin, /cordis\.patch\.yml/)
+    assert.match(findings[0].plugin, /pkg/)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('a config sub-key named id is not mistaken for an inserted entry', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'doctor-collide3-'))
+  try {
+    const nm = join(dir, 'node_modules')
+    mkdirSync(join(nm, 'pkg'), { recursive: true })
+    writeFileSync(
+      join(nm, 'pkg', 'cordis.patch.yml'),
+      '- insert:\n    - id: real\n      name: pkg\n      config:\n        id: not-an-entry\n',
+    )
+    assert.deepEqual(checkInsertCollisions(dir, []), [])
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
